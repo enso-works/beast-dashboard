@@ -23,6 +23,9 @@ two launchd agents and the Claude Code hooks, and prints the URL.
 The agents run while you are logged in and restart when they crash. tmux sessions keep running when the dashboard
 restarts.
 
+A second Claude login in a folder other than `~/.claude-company` is named once at install:
+`BD_COMPANY_DIR=~/.claude-work ./install-mac.sh`. Later runs keep it.
+
 ## Phone and HTTPS
 
 The terminal (ttyd) has no login of its own, so on a Mac it listens on this machine only. To use the terminal from

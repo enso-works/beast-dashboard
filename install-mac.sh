@@ -41,9 +41,21 @@ TTYD="$(command -v ttyd || true)"
 fill() { sed -e "s#__NODE__#$NODE#g" -e "s#__REPO__#$REPO#g" -e "s#__PATH__#$AGENT_PATH#g" -e "s#__HOME__#$HOME#g" \
   -e "s#__SHELL__#$USER_SHELL#g" -e "s#__TTYD__#$TTYD#g" -e "s#__LOGS__#$LOGS#g" "mac/launchd/$1.plist" > "$LA/$1.plist"; }
 
+# The second Claude login's folder when it isn't ~/.claude-company (lib/accounts.js). Given once, e.g.
+# BD_COMPANY_DIR=~/.claude-work ./install-mac.sh; later runs keep the value from the installed agent.
+if [ -z "${BD_COMPANY_DIR:-}" ] && [ -f "$LA/com.beastdash.dash.plist" ]; then
+  BD_COMPANY_DIR="$(plutil -extract EnvironmentVariables.BD_COMPANY_DIR raw -o - "$LA/com.beastdash.dash.plist" 2>/dev/null || true)"
+fi
+[ -n "${BD_COMPANY_DIR:-}" ] && export BD_COMPANY_DIR="${BD_COMPANY_DIR/#\~/$HOME}"
+
 log "launchd agents (node: $NODE, repo: $REPO, logs: $LOGS)"
 mkdir -p "$LA" "$LOGS"
-fill com.beastdash.dash && mac/agent.sh load com.beastdash.dash "$LA/com.beastdash.dash.plist"
+fill com.beastdash.dash
+if [ -n "${BD_COMPANY_DIR:-}" ]; then
+  plutil -insert EnvironmentVariables.BD_COMPANY_DIR -string "$BD_COMPANY_DIR" "$LA/com.beastdash.dash.plist"
+  echo "  second Claude login: $BD_COMPANY_DIR"
+fi
+mac/agent.sh load com.beastdash.dash "$LA/com.beastdash.dash.plist"
 if [ -n "$TTYD" ]; then
   fill com.beastdash.term && mac/agent.sh load com.beastdash.term "$LA/com.beastdash.term.plist"
 else
